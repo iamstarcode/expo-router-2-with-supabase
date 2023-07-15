@@ -1,9 +1,18 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+
+import { SessionContextProvider } from "@supabase/auth-helpers-react";
+
 import { useFonts } from 'expo-font';
-import { SplashScreen, Stack } from 'expo-router';
+import { Slot, SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
+import { AuthProvider } from './(auth)/provider';
+import { supabase } from "../libs/supabase";
+
+import { GluestackUIProvider } from "@/components"
+import { config } from "@/gluestack-ui.config"
+
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -12,11 +21,12 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
+  initialRouteName: '(tabs)/',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
+
 
 export default function RootLayout() {
   const [loaded, error] = useFonts({
@@ -46,11 +56,20 @@ function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
+
+    <SessionContextProvider supabaseClient={supabase}>
+      <AuthProvider>
+        <GluestackUIProvider config={config.theme}>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            {/*  <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+            </Stack> */}
+            {/*  <Stack screenOptions={{ headerShown: false }} /> */}
+            <Slot />
+          </ThemeProvider>
+        </GluestackUIProvider>
+      </AuthProvider>
+    </SessionContextProvider>
   );
 }
