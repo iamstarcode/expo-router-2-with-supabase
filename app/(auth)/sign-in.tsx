@@ -10,6 +10,7 @@ export default function SignIn() {
     return <>
         <StatusBar style="auto" />
         <Box>
+
             <Text>bjbjbvj</Text>
         </Box>
         <View className="flex-1 justify-center items-center p-4">
