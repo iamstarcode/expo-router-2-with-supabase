@@ -1,6 +1,7 @@
 import { StyleSheet } from 'react-native';
 
 import { Text, View } from '@/Expo/Themed';
+import { useAuth } from '../(auth)/provider';
 
 export default function TabOneScreen() {
   return (

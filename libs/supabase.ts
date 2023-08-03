@@ -1,7 +1,6 @@
 import 'react-native-url-polyfill/auto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
-import { Env } from '../config/env';
 //import { SUPABASE_STORAGE_KEY } from '../config/constants';
 import { Database } from './database.types';
 
@@ -19,7 +18,7 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
-export const supabase = createClient<Database>(
+export const supabaseClient = createClient<Database>(
   //Env.SUPABASE_URL ?? '',
   //Env.SUPABASE_ANON_KEY ?? '',
   process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
@@ -40,7 +39,7 @@ export const supabase = createClient<Database>(
 );
 
 export const getProfileByUsername = async (args: string[]) =>
-  supabase
+  supabaseClient
     .from('profiles')
     .select('*')
     .eq('username', args[1])
@@ -48,7 +47,7 @@ export const getProfileByUsername = async (args: string[]) =>
     .then((res) => res);
 
 export const getProfileByById = async (args: string[]) =>
-  supabase
+  supabaseClient
     .from('profiles')
     .select('*')
     .eq('id', args[1])
@@ -56,14 +55,14 @@ export const getProfileByById = async (args: string[]) =>
     .then((res) => res);
 
 export const getProducts = async () =>
-  supabase
+  supabaseClient
     .from('products')
     .select(`*`)
     .eq('editable', true)
     .then((res) => res);
 
 export const getSingleProduct = async (args: any) =>
-  supabase
+  supabaseClient
     .from('products')
     .select(`*`)
     .eq('id', args[1])

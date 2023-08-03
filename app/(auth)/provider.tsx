@@ -1,16 +1,20 @@
-import { useContext, useEffect, useState } from "react";
-import { createContext } from "react";
-import React from "react";
+import { useContext, useEffect, useState } from 'react';
+import { createContext } from 'react';
+import React from 'react';
 
-
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from '@supabase/auth-helpers-react';
+import { AuthSession } from '@supabase/supabase-js';
 import {
-  AuthSession,
-} from "@supabase/supabase-js";
-import { useRootNavigation, useRouter, useSegments, usePathname } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Platform } from "react-native";
+  useRootNavigation,
+  useRouter,
+  useSegments,
+  usePathname,
+  useRootNavigationState,
+} from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 //import { SUPABASE_STORAGE_KEY } from "../../config/constants";
+import { supabaseClient } from '@/libs/supabase';
 
 export interface IAuthState {
   accessToken: string;
@@ -19,6 +23,7 @@ export interface IAuthState {
 
 export interface AuthContextType {
   session: AuthSession | null | undefined;
+  authInitialized: boolean;
 }
 
 interface Props {
@@ -30,68 +35,34 @@ export const AuthContext = createContext<AuthContextType | undefined>(
 );
 
 export function AuthProvider({ children }: Props) {
-  const supabase = useSupabaseClient();
+  //const supabase = useSupabaseClient();
   const segments = useSegments();
   const router = useRouter();
-  const path = usePathname();
 
-  const [isNavigationReady, setNavigationReady] = useState(false);
-  const rootNavigation = useRootNavigation();
+  console.log(segments);
 
+  const [session, setSession] = useState<AuthSession | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
-  const [session, setSession] = useState<AuthSession | null | undefined>(null);
-
-  useEffect(() => {
-    const unsubscribe = rootNavigation?.addListener("state", (event) => {
-      setNavigationReady(true);
-    });
-    return function cleanup() {
-      if (unsubscribe) {
-        unsubscribe();
-      }
-    };
-  }, [rootNavigation]);
+  const navigationState = useRootNavigationState();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    console.log(authInitialized);
+    if (!navigationState?.key || !authInitialized) return;
 
-    const { data: authListner } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        if (_event == "TOKEN_REFRESHED") {
-          //Handle Accordinngly
-        }
-      }
-    );
-
-    return () => {
-      authListner.subscription;
-    };
-  }, []);
-
-  useEffect(() => {
-
-    if (!isNavigationReady) {
-      return;
-    }
-    const inAuthGroup = segments[0] === "(auth)";
+    const inAuthGroup = segments[0] === '(auth)';
 
     if (
       // If the user is not signed in and the initial segment is not anything in the auth group.
       !session?.user &&
       !inAuthGroup
     ) {
-
-      router.replace('/(auth)/sign-in');
-
-
+      router.replace('/(auth)/sign-in/');
     } else if (session?.user && inAuthGroup) {
       // Redirect away from the sign-in page.
-      //  router.replace('/'); to tabs 
-      console.log("no session")
-      router.replace("/");
+      router.replace('/(tabs)/'); // to tabs
+      //console.log('no session');
+      //router.replace('/');
       /*   if (Platform.OS === "ios") {
           setTimeout(() => {
             router.replace("/");
@@ -102,10 +73,34 @@ export function AuthProvider({ children }: Props) {
           });
         } */
     }
-  }, [session, segments]);
+  }, [session, segments, authInitialized, navigationState?.key]);
+
+  useEffect(() => {
+    if (authInitialized) return;
+
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    const { data: authListner } = supabaseClient.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session);
+        setAuthInitialized(true);
+        if (_event == 'TOKEN_REFRESHED') {
+          //Handle Accordinngly
+        }
+      }
+    );
+
+    return () => {
+      authListner.subscription;
+    };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ session }}>{children}</AuthContext.Provider>
+    <AuthContext.Provider value={{ session, authInitialized }}>
+      {children}
+    </AuthContext.Provider>
   );
 }
 

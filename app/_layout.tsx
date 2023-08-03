@@ -6,13 +6,16 @@ import {
 } from '@react-navigation/native';
 
 import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { NativeBaseProvider, Box } from 'native-base';
+import { theme } from '../config/native-base-config';
 
 import { useFonts } from 'expo-font';
 import { Slot, SplashScreen, Stack } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { AuthProvider } from './(auth)/provider';
-import { supabase } from '../libs/supabase';
+import { AuthProvider, useAuth } from './(auth)/provider';
+import { supabaseClient } from '../libs/supabase';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -21,7 +24,7 @@ export {
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)/',
+  initialRouteName: '/(tabs)',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -48,26 +51,30 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <AuthProvider>
+      <RootLayoutNav />
+    </AuthProvider>
+  );
 }
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
+  const { session, authInitialized } = useAuth();
+
+  if (!authInitialized && !session?.user) return null;
 
   return (
-    <SessionContextProvider supabaseClient={supabase}>
-      <AuthProvider>
-        <ThemeProvider
-          value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}
-        >
-          {/*  <Stack>
+    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <SafeAreaProvider>
+        <Slot />
+      </SafeAreaProvider>
+
+      {/*  <Stack>
               <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
             </Stack> */}
-          {/*  <Stack screenOptions={{ headerShown: false }} /> */}
-          <Slot />
-        </ThemeProvider>
-      </AuthProvider>
-    </SessionContextProvider>
+      {/*  <Stack screenOptions={{ headerShown: false }} /> */}
+    </ThemeProvider>
   );
 }
