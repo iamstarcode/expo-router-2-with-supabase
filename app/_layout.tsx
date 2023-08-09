@@ -1,3 +1,4 @@
+import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import {
   DarkTheme,
@@ -5,17 +6,15 @@ import {
   ThemeProvider,
 } from '@react-navigation/native';
 
-import { SessionContextProvider } from '@supabase/auth-helpers-react';
-import { NativeBaseProvider, Box } from 'native-base';
-import { theme } from '../config/native-base-config';
-
 import { useFonts } from 'expo-font';
-import { Slot, SplashScreen, Stack } from 'expo-router';
+import { Slot, SplashScreen } from 'expo-router';
 import { useEffect } from 'react';
 import { useColorScheme } from 'react-native';
-import { AuthProvider, useAuth } from './(auth)/provider';
-import { supabaseClient } from '../libs/supabase';
+import { AuthProvider, useAuth } from '../context/AuthContext';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { theme } from '../config/native-base-config';
+import { Box, NativeBaseProvider } from 'native-base';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -53,7 +52,9 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
+      <NativeBaseProvider theme={theme}>
+        <RootLayoutNav />
+      </NativeBaseProvider>
     </AuthProvider>
   );
 }
@@ -69,12 +70,6 @@ function RootLayoutNav() {
       <SafeAreaProvider>
         <Slot />
       </SafeAreaProvider>
-
-      {/*  <Stack>
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            </Stack> */}
-      {/*  <Stack screenOptions={{ headerShown: false }} /> */}
     </ThemeProvider>
   );
 }
